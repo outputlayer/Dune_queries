@@ -1,0 +1,37 @@
+with tx as (select hash
+from linea.transactions
+where to in (0x0cab6977a9c70e04458b740476b498b214019641,0xa7fd99748ce527eadc0bdac60cba8a4ef4090f7c,0x00000000000000adc04c56bf30ac9d3c0aaf14dc,0x1aed60a97192157fda7fb26267a439d523d09c5e,0x42c759a719c228050901299b88fd316c3a050617)
+and success = true),
+
+nft_tx as (select evt_tx_hash, to, "from",  evt_block_time, tokenId
+from erc721_linea.evt_transfer
+where contract_address = 0x194395587d7b169E63eaf251E86B1892fA8f1960
+and "evt_tx_hash" in (select * from tx)
+order by evt_block_time desc),
+
+
+eth_tx as (select nft_tx."from", nft_tx.to, nft_tx.tokenId,  e.value/1e18 as "value", e.evt_tx_hash, e.evt_block_time as "time"
+from erc20_linea.evt_transfer e
+LEFT JOIN nft_tx
+on e.evt_tx_hash = nft_tx.evt_tx_hash
+where e."from" in (select to from nft_tx)
+and e.evt_tx_hash in (select evt_tx_hash from nft_tx)
+and e.contract_address = 0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f
+and e.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x5eeb28b1195560be84adcbfa952086ce1d3da8da, 0x4c11f940e2d09ef9d5000668c1c9410f0aaf0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960 )
+order by e.evt_block_time desc),
+
+eth_rest_tx as (select nft_tx."from", nft_tx.to,  nft_tx.tokenId,  a.value/1e18 as "value",  a.tx_hash, a.block_time as "time" 
+from linea.traces a
+LEFT JOIN nft_tx
+on a.tx_hash = nft_tx.evt_tx_hash
+and a.to = nft_tx."from"
+where a.tx_hash in (select evt_tx_hash from nft_tx) 
+and  a.tx_hash not in (select  evt_tx_hash from eth_tx) 
+and a.value > 0
+and a.gas_used = 0
+and a.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x4c11F940E2D09eF9D5000668c1C9410f0AaF0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960))
+
+SELECT * FROM eth_tx
+UNION ALL
+SELECT * FROM eth_rest_tx
+order by time desc
