@@ -17,8 +17,9 @@ on e.evt_tx_hash = nft_tx.evt_tx_hash
 where e."from" in (select to from nft_tx)
 and e.evt_tx_hash in (select evt_tx_hash from nft_tx)
 and e.contract_address = 0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f
-and e.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x5eeb28b1195560be84adcbfa952086ce1d3da8da, 0x4c11f940e2d09ef9d5000668c1c9410f0aaf0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960 )
-order by e.evt_block_time desc),
+and e.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x5eeb28b1195560be84adcbfa952086ce1d3da8da, 0x4c11f940e2d09ef9d5000668c1c9410f0aaf0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960) 
+AND nft_tx."from" IS NOT NULL
+AND nft_tx.to IS NOT NULL),
 
 eth_rest_tx as (select nft_tx."from", nft_tx.to,  nft_tx.tokenId,  a.value/1e18 as "value",  a.tx_hash, a.block_time as "time" 
 from linea.traces a
@@ -29,7 +30,10 @@ where a.tx_hash in (select evt_tx_hash from nft_tx)
 and  a.tx_hash not in (select  evt_tx_hash from eth_tx) 
 and a.value > 0
 and a.gas_used = 0
-and a.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x4c11F940E2D09eF9D5000668c1C9410f0AaF0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960))
+and success = true
+and a.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x4c11F940E2D09eF9D5000668c1C9410f0AaF0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960)
+AND nft_tx."from" IS NOT NULL
+AND nft_tx.to IS NOT NULL)
 
 SELECT * FROM eth_tx
 UNION ALL
