@@ -33,9 +33,19 @@ and a.gas_used = 0
 and success = true
 and a.to not in (0x7538262ae993ca117a0e481f908209137a46268e, 0x4c11F940E2D09eF9D5000668c1C9410f0AaF0833, 0x194395587d7b169e63eaf251e86b1892fa8f1960)
 AND nft_tx."from" IS NOT NULL
-AND nft_tx.to IS NOT NULL)
+AND nft_tx.to IS NOT NULL),
+
+mint as (select 0x194395587d7b169e63eaf251e86b1892fa8f1960 as "from", to,  tokenId, 0.01 as "value",  evt_tx_hash, evt_block_time as time
+FROM erc721_linea.evt_transfer
+WHERE contract_address = 0x194395587d7b169e63eaf251e86b1892fa8f1960
+AND "from" = 0x0000000000000000000000000000000000000000
+)
+
+
 
 SELECT * FROM eth_tx
 UNION ALL
 SELECT * FROM eth_rest_tx
+UNION ALL
+SELECT * FROM mint
 order by time desc
