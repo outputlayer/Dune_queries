@@ -7,11 +7,11 @@ SELECT  tokenId, "from" AS seller,"value" AS selling_price
 FROM query_3646660
 WHERE "from" IS NOT NULL),
 
-Profits AS (SELECT s.tokenId, s.seller, s.selling_price, COALESCE(b.buying_price, 0) AS buying_price, s.selling_price - COALESCE(b.buying_price, 0) AS profit
+Profits AS (SELECT s.tokenId, s.seller, s.selling_price, b.buying_price AS buying_price, s.selling_price - b.buying_price AS profit
 FROM SellingTransactions s
 INNER JOIN BuyingTransactions b
-ON s.tokenId = b.tokenId
-WHERE b.row_num = 1)
+ON s.seller = b.buyer
+and s.tokenId = b.tokenId)
 
 SELECT  p.seller AS Address, COALESCE(q.og, 'Not OG') AS "OG?",  COALESCE(q.NFTs, 0) AS "Minted", COALESCE(h.tokens_held, 0) AS "Holding",  SUM(p.profit) AS Total_Profit
 FROM  Profits p 
