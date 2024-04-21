@@ -1,0 +1,6 @@
+SELECT count(*) as "NFTs", to as "to",   ARRAY_AGG(tokenId) as nft_ids, 'OG' as "og"
+FROM erc721_linea.evt_transfer
+WHERE contract_address = 0x194395587d7b169e63eaf251e86b1892fa8f1960
+AND "from" = 0x0000000000000000000000000000000000000000
+group by to
+order by NFTs desc
