@@ -1,0 +1,16 @@
+WITH latest_transfers AS (SELECT tokenId, to AS current_owner, evt_block_time, ROW_NUMBER() OVER (PARTITION BY tokenId ORDER BY evt_block_number DESC) AS row_num
+FROM erc721_linea.evt_transfer
+WHERE contract_address = 0x194395587d7b169E63eaf251E86B1892fA8f1960),
+
+current_ownership AS (SELECT tokenId, current_owner, evt_block_time
+FROM  latest_transfers
+WHERE  row_num = 1)
+
+SELECT
+    COUNT(tokenId) AS tokens_held,
+    current_owner AS holder_address,
+    ARRAY_AGG(tokenId) AS nft_ids,
+    max(evt_block_time) AS last_received_date
+FROM current_ownership
+GROUP BY current_owner
+ORDER BY tokens_held DESC
